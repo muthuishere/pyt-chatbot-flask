@@ -1,42 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <link rel="stylesheet" type="text/css" href="/static/style.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  </head>
-  <body>
-    <h1>Flask Chatterbot Example</h1>
-    <h3>A web implementation of <a href="https://github.com/gunthercox/ChatterBot">ChatterBot</a> using Flask.</h3>
-    <div>
-      <div id="chatbox">
-        <p class="botText"><span>Hi! I'm Chatterbot.</span></p>
-      </div>
-      <div id="userInput">
-        <input id="textInput" type="text" name="msg" placeholder="Message">
-        <input id="buttonInput" type="submit" value="Send">
-      </div>
-      <script>
-        function getBotResponse() {
-          var rawText = $("#textInput").val();
-          var userHtml = '<p class="userText"><span>' + rawText + '</span></p>';
-          $("#textInput").val("");
-          $("#chatbox").append(userHtml);
-          document.getElementById('userInput').scrollIntoView({block: 'start', behavior: 'smooth'});
-          $.get("/get", { msg: rawText }).done(function(data) {
-            var botHtml = '<p class="botText"><span>' + data + '</span></p>';
-            $("#chatbox").append(botHtml);
-            document.getElementById('userInput').scrollIntoView({block: 'start', behavior: 'smooth'});
-          });
-        }
-        $("#textInput").keypress(function(e) {
-            if(e.which == 13) {
-                getBotResponse();
-            }
-        });
-        $("#buttonInput").click(function() {
-          getBotResponse();
-        })
-      </script>
+<head>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+
+    <link rel="stylesheet" type="text/css" href="/static/main.css">
+</head>
+<body>
+<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+<h1>Chat Example</h1>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <span class="glyphicon glyphicon-comment"></span> Chat
+                    <div class="btn-group pull-right">
+                        <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+                            <span class="glyphicon glyphicon-chevron-down"></span>
+                        </button>
+
+                    </div>
+                </div>
+                <div class="panel-body" style="height: 500px">
+                    <ul class="chat" id="chatbox">
+
+
+                    </ul>
+                </div>
+                <div class="panel-footer">
+
+                    <div class="panel-footer">
+                        <div class="row">
+                            <div class="col-md-10">
+                                <input id="textInput" name="msg" type="text" class="form-control input-sm"
+                                       placeholder="Type your message here..." style=" height: 78px;font-size: 38px;width: 100%;">
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-warning btn-sm" id="buttonInput" type="submit" style="   height: 78px;width: 100%;    ">
+                                    Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
     </div>
-  </body>
+</div>
+
+
+<script>
+
+    var idleMessage = ""
+
+    function showIdleMessage() {
+
+        try {
+            if (idleMessage.length == 0)
+                return;
+
+            appendBotText(idleMessage)
+            idleMessage = ""
+        } catch (e) {
+
+        }
+
+    }
+
+
+    function appendUserText(data) {
+
+        var elem = document.createElement("li")
+        elem.setAttribute("class", "right clearfix")
+        elem.innerHTML = "  <span class=\"chat-img pull-right\">\n" +
+            "                            <img src=\"http://placehold.it/50/FA6F57/fff&text=Me\" alt=\"User Avatar\" class=\"img-circle\" />\n" +
+            "                        </span>\n" +
+            "                            <div class=\"chat-body clearfix\">\n" +
+            "                                <div class=\"header\">\n" +
+            "                                    " +
+            "                                    " +
+            "                                </div>\n" +
+            "                                <p style='text-align:right'>\n" + data +
+            "                                </p>\n" +
+            "                            </div>\n"
+        document.getElementById("chatbox").appendChild(elem);
+        scrollToContainer();
+    }
+
+    function appendBotText(data) {
+
+        var elem = document.createElement("li")
+        elem.setAttribute("class", "left clearfix")
+        elem.innerHTML = "       <span class=\"chat-img pull-left\">\n" +
+            "                            <img src=\"http://placehold.it/50/55C1E7/fff&text=Bot\" alt=\"User Avatar\" class=\"img-circle\" />\n" +
+            "                        </span>\n" +
+            "                            <div class=\"chat-body clearfix\">\n" +
+            "                                <div class=\"header\">\n" +
+            "                                " +
+            "                                        \n" +
+            "                                </div>\n" +
+            "                                <p>\n" + data +
+            "                                </p>\n" +
+            "                            </div>\n";
+
+        document.getElementById("chatbox").appendChild(elem);
+        scrollToContainer();
+    }
+
+
+    function scrollToContainer() {
+
+        document.getElementById("chatbox").scrollIntoView(false); // Bottom
+        document.getElementById("textInput").focus();
+
+    }
+
+    function getBotResponse() {
+
+        idleMessage = "";
+        var rawText = $("#textInput").val();
+        appendUserText(rawText)
+        document.getElementById("textInput").value = ""
+        $.get("/get", {msg: rawText}).done(function (data) {
+
+            if (data.indexOf("#TIMED#") > 0) {
+                dataArray = data.split("#TIMED#");
+                data = dataArray[0];
+                idleMessage = dataArray[1];
+                //Show idle message after 20 seconds
+                setTimeout(showIdleMessage, 20000)
+            }
+
+            appendBotText(data);
+
+        });
+    }
+
+    $("#textInput").keypress(function (e) {
+        if (e.which == 13) {
+            getBotResponse();
+        }
+    });
+    $("#buttonInput").click(function () {
+        getBotResponse();
+    })
+
+    setTimeout(function () {
+
+        appendBotText("Hi There, How can i help you today.")
+    }, 2000)
+</script>
+</div>
+</body>
 </html>

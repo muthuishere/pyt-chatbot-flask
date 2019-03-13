@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+
+  </head>
+  <body>
+    <h1>Flask Chatterbot Example</h1>
+    <h3>A web implementation of <a href="https://github.com/gunthercox/ChatterBot">ChatterBot</a> using Flask.</h3>
+    <div>
+      <div id="chatbox">
+        <p class="botText"><span>Hi! I'm Chatterbot.</span></p>
+      </div>
+      <div id="userInput">
+        <input id="textInput" type="text" name="msg" placeholder="Message">
+        <input id="buttonInput" type="submit" value="Send">
+      </div>
+      <script>
+
+          var idleMessage =""
+
+          function showIdleMessage(){
+
+              if(idleMessage.length == 0)
+                  return;
+
+              appendToChat(idleMessage)
+          }
+
+          function appendToChat(data){
+                 var botHtml = '<p class="botText"><span>' + data + '</span></p>';
+            $("#chatbox").append(botHtml);
+            document.getElementById('userInput').scrollIntoView({block: 'start', behavior: 'smooth'});
+
+          }
+        function getBotResponse() {
+
+              idleMessage="";
+          var rawText = $("#textInput").val();
+          var userHtml = '<p class="userText"><span>' + rawText + '</span></p>';
+          $("#textInput").val("");
+          $("#chatbox").append(userHtml);
+          document.getElementById('userInput').scrollIntoView({block: 'start', behavior: 'smooth'});
+
+
+          $.get("/get", { msg: rawText }).done(function(data) {
+
+              if(data.indexOf("#TIMED#")){
+                  dataArray = data.split("#TIMED#");
+                  data = dataArray[0];
+                  idleMessage = dataArray[1];
+                  //Show idle message after 20 seconds
+                  setTimeout(showIdleMessage,20000)
+              }
+
+              appendToChat(data);
+
+          });
+        }
+        $("#textInput").keypress(function(e) {
+            if(e.which == 13) {
+                getBotResponse();
+            }
+        });
+        $("#buttonInput").click(function() {
+          getBotResponse();
+        })
+      </script>
+    </div>
+  </body>
+</html>
